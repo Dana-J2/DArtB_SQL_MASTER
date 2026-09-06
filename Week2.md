@@ -45,106 +45,360 @@
 
 ### 1-1 날짜별 매출 집계하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+DROP DATABASE dartb_sql_master_week2;
+
+CREATE DATABASE dartb_sql_master_week2
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+
+USE dartb_sql_master_week2;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_1](image/week2/1_1.png)
+<br>
  
 ### 1-2 이동평균을 사용한 날짜별 추이 보기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+DROP DATABASE dartb_sql_master_week2;
+
+CREATE DATABASE dartb_sql_master_week2
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_0900_ai_ci;
+
+USE dartb_sql_master_week2;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_2](image/week2/1_2.png)
+<br>
  
 ### 1-3 당월 매출 누계 구하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+WITH daily_sales AS (
+    SELECT
+        dt,
+        SUM(purchase_amount) AS total_amount
+    FROM purchase_log_daily
+    GROUP BY dt
+)
+SELECT
+    dt,
+    DATE_FORMAT(dt, '%Y-%m') AS `year_month`,
+    total_amount,
+    SUM(total_amount) OVER (
+        PARTITION BY YEAR(dt), MONTH(dt)
+        ORDER BY dt
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS monthly_cumulative_amount
+FROM daily_sales
+ORDER BY dt;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_3](image/week2/1_3.png)
+<br>
 
 ### 1-4 월별 매출의 작대비 구하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+ELECT
+    MONTH(dt) AS month_value,
+    SUM(
+        CASE WHEN YEAR(dt) = 2014
+             THEN purchase_amount
+        END
+    ) AS amount_2014,
+    SUM(
+        CASE WHEN YEAR(dt) = 2015
+             THEN purchase_amount
+        END
+    ) AS amount_2015,
+    ROUND(
+        100.0
+        * SUM(
+            CASE WHEN YEAR(dt) = 2015
+                 THEN purchase_amount
+            END
+        )
+        / NULLIF(
+            SUM(
+                CASE WHEN YEAR(dt) = 2014
+                     THEN purchase_amount
+                END
+            ),
+            0
+        ),
+        2
+    ) AS yoy_rate
+FROM purchase_log_monthly
+GROUP BY MONTH(dt)
+ORDER BY month_value;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_4](image/week2/1_4.png)
+<br>
  
 ### 1-5 Z 차트로 업적의 추이 확인하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+WITH monthly_sales AS (
+    SELECT
+        YEAR(dt) AS year_value,
+        MONTH(dt) AS month_value,
+        SUM(purchase_amount) AS amount
+    FROM purchase_log_monthly
+    GROUP BY YEAR(dt), MONTH(dt)
+),
+z_chart AS (
+    SELECT
+        year_value,
+        month_value,
+        amount,
+
+        SUM(
+            CASE WHEN year_value = 2015
+                 THEN amount
+                 ELSE 0
+            END
+        ) OVER (
+            ORDER BY year_value, month_value
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS cumulative_amount,
+
+        SUM(amount) OVER (
+            ORDER BY year_value, month_value
+            ROWS BETWEEN 11 PRECEDING AND CURRENT ROW
+        ) AS moving_annual_amount
+
+    FROM monthly_sales
+)
+SELECT
+    CONCAT(
+        year_value,
+        '-',
+        LPAD(month_value, 2, '0')
+    ) AS `year_month`,
+    amount,
+    cumulative_amount,
+    moving_annual_amount
+FROM z_chart
+WHERE year_value = 2015
+ORDER BY year_value, month_value;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_5](image/week2/1_5.png)
+<br>
  
 ### 1-6 매출을 파악할 때 중요 포인트 
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+WITH monthly_sales AS (
+    SELECT
+        YEAR(dt) AS year_value,
+        MONTH(dt) AS month_value,
+        COUNT(*) AS purchase_count,
+        ROUND(AVG(purchase_amount), 2) AS avg_amount,
+        SUM(purchase_amount) AS monthly_amount
+    FROM purchase_log_monthly
+    GROUP BY YEAR(dt), MONTH(dt)
+),
+sales_metrics AS (
+    SELECT
+        year_value,
+        month_value,
+        purchase_count,
+        avg_amount,
+        monthly_amount,
+
+        SUM(monthly_amount) OVER (
+            PARTITION BY year_value
+            ORDER BY month_value
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS cumulative_amount,
+
+        LAG(monthly_amount, 12) OVER (
+            ORDER BY year_value, month_value
+        ) AS last_year_amount
+
+    FROM monthly_sales
+)
+SELECT
+    CONCAT(
+        year_value,
+        '-',
+        LPAD(month_value, 2, '0')
+    ) AS `year_month`,
+    purchase_count,
+    avg_amount,
+    monthly_amount,
+    cumulative_amount,
+    last_year_amount,
+    ROUND(
+        100.0 * monthly_amount
+        / NULLIF(last_year_amount, 0),
+        2
+    ) AS yoy_rate
+FROM sales_metrics
+WHERE year_value = 2015
+ORDER BY year_value, month_value;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![1_6](image/week2/1_6.png)
+<br>
 
 
 ## 2. 다면적인 축을 사용해 데이터 집계하기 
 
 ### 2-1 카테고리별 매출과 소계 계산하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+SELECT
+    COALESCE(category, 'all') AS category,
+    COALESCE(sub_category, 'all') AS sub_category,
+    SUM(price) AS amount
+FROM purchase_detail_log
+GROUP BY category, sub_category WITH ROLLUP;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![2_1](image/week2/2_1.png)
+<br>
 
 ### 2-2 ABC 분석으로 잘 팔리는 상품 판별하기
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+WITH category_sales AS (
+    SELECT
+        category,
+        SUM(price) AS amount
+    FROM purchase_detail_log
+    GROUP BY category
+),
+sales_ratio AS (
+    SELECT
+        category,
+        amount,
+
+        100.0 * amount
+        / SUM(amount) OVER () AS composition_ratio,
+
+        100.0
+        * SUM(amount) OVER (
+            ORDER BY amount DESC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        )
+        / SUM(amount) OVER () AS cumulative_ratio
+
+    FROM category_sales
+)
+SELECT
+    category,
+    amount,
+    ROUND(composition_ratio, 2) AS composition_ratio,
+    ROUND(cumulative_ratio, 2) AS cumulative_ratio,
+    CASE
+        WHEN cumulative_ratio <= 70 THEN 'A'
+        WHEN cumulative_ratio <= 90 THEN 'B'
+        ELSE 'C'
+    END AS abc_rank
+FROM sales_ratio
+ORDER BY amount DESC;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![2_2](image/week2/2_2.png)
+<br>
 
 ### 2-3 팬 차트로 상품의 매출 증가율 확인하기
-
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
+- 각 카테고리의 첫 달 매출을 100으로 두고 이후 매출 비율 계산
+- 여러 달 데이터가 있다면 같은 쿼리로 증감 추이를 확인할 수 있습니다.
 
 ```sql
-여기에 코드를 적어주세요.
+WITH monthly_category_sales AS (
+    SELECT
+        DATE_FORMAT(dt, '%Y-%m') AS `year_month`,
+        category,
+        SUM(price) AS amount
+    FROM purchase_detail_log
+    GROUP BY DATE_FORMAT(dt, '%Y-%m'), category
+),
+fan_chart AS (
+    SELECT
+        `year_month`,
+        category,
+        amount,
+        FIRST_VALUE(amount) OVER (
+            PARTITION BY category
+            ORDER BY `year_month`
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS base_amount
+    FROM monthly_category_sales
+)
+SELECT
+    `year_month`,
+    category,
+    amount,
+    base_amount,
+    ROUND(
+        100.0 * amount / NULLIF(base_amount, 0),
+        2
+    ) AS rate
+FROM fan_chart
+ORDER BY `year_month`, category;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![2_3](image/week2/2_3.png)
+<br>
 
 ### 2-4 히스토그램으로 구매 가격대 집계하기 
 
-<!-- 이 부분을 지우고 새롭게 배운 내용을 자유롭게 정리해주세요. -->
-
 ```sql
-여기에 코드를 적어주세요.
+WITH stats AS (
+    SELECT
+        MIN(price) AS min_price,
+        MAX(price) AS max_price,
+        (MAX(price) - MIN(price)) / 10.0 AS bucket_width
+    FROM purchase_detail_log
+),
+binned AS (
+    SELECT
+        p.price,
+        s.min_price,
+        s.max_price,
+        s.bucket_width,
+
+        LEAST(
+            FLOOR(
+                (p.price - s.min_price)
+                / NULLIF(s.bucket_width, 0)
+            ) + 1,
+            10
+        ) AS bucket
+
+    FROM purchase_detail_log AS p
+    CROSS JOIN stats AS s
+)
+SELECT
+    bucket,
+    ROUND(
+        min_price + bucket_width * (bucket - 1),
+        2
+    ) AS lower_limit,
+    ROUND(
+        min_price + bucket_width * bucket,
+        2
+    ) AS upper_limit,
+    COUNT(*) AS num_purchase,
+    SUM(price) AS total_amount
+FROM binned
+GROUP BY
+    bucket,
+    min_price,
+    bucket_width
+ORDER BY bucket;
 ```
 
-<!-- 이 부분을 지우고 실행 결과 화면을 제출해주세요. -->
+![2_4](image/week2/2_4.png)
+<br>
 
 
 
