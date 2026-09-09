@@ -85,7 +85,7 @@ ORDER BY
     action_count DESC;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_1](image/week3/1_1.png)
 
 ### 1-2 연령별 구분 집계하기
 
@@ -141,7 +141,7 @@ GROUP BY category
 ORDER BY category;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_2](image/week3/1_2.png)
 
 ### 1-3 연령별 구분의 특징 추출하기
 
@@ -197,7 +197,7 @@ ORDER BY
     u.category;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_3](image/week3/1_3.png)
  
 ### 1-4 사용자의 방문 빈도 집계하기
 
@@ -234,7 +234,7 @@ FROM visit_distribution
 ORDER BY visit_days;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_4](image/week3/1_4.png)
 
 ### 1-5 벤 다이어그램으로 사용자 액션 집계하기
 
@@ -290,7 +290,7 @@ ORDER BY
     has_favorite DESC;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_5](image/week3/1_5.png)
 
 ### 1-6 Decile 분석을 사용해 사용자를 10단계 그룹으로 나누기
 
@@ -347,7 +347,7 @@ FROM decile_summary
 ORDER BY decile;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_6](image/week3/1_6.png)
 
 ### 1-7 RFM 분석으로 사용자를 3가지 관점의 그룹으로 나누기
 
@@ -431,7 +431,7 @@ ORDER BY
     user_id;
 ```
 
-> 📸 실행 결과 화면을 여기에 첨부
+![1_7](image/week3/1_7.png)
 
 
 ### 🎉 수고하셨습니다.
