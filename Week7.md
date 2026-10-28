@@ -158,8 +158,9 @@ WHERE action_type = 'search' AND result_num = 0
 GROUP BY keyword
 ORDER BY no_match_count DESC, keyword;
 ```
-
 ![1-1 실행 결과](/image/week7/1-1.png)
+![1-1 실행 결과](/image/week7/1-1(2).png)
+
 
 ### 1-2 재검색 비율과 키워드 집계하기 
 
@@ -213,8 +214,8 @@ WHERE action_type = 'search' AND next_action = 'search'
 GROUP BY keyword, result_num, next_keyword, next_result_num
 ORDER BY retry_count DESC, keyword, next_keyword;
 ```
-
 ![1-2 실행 결과](/image/week7/1-2.png)
+![1-2 실행 결과](/image/week7/1-2(2).png)
 
 ### 1-3 재검색 키워드를 분류해서 집계하기 
 
@@ -316,8 +317,9 @@ GROUP BY keyword, result_num
 HAVING SUM(CASE WHEN next_action IS NULL THEN 1 ELSE 0 END) > 0
 ORDER BY exit_count DESC, keyword, result_num;
 ```
-
 ![1-4 실행 결과](/image/week7/1-4.png)
+![1-4 실행 결과](/image/week7/1-4(2).png)
+
 
 ### 1-5 검색 키워드 관련 지표의 집계 효율화 하기
 
@@ -359,7 +361,6 @@ FROM search_flags
 GROUP BY DATE(stamp), keyword
 ORDER BY dt, keyword;
 ```
-
 ![1-5 실행 결과](/image/week7/1-5.png)
 
 ### 1-6 검색 결과의 포괄성을 지표화 하기
@@ -443,8 +444,9 @@ SELECT keyword, ROUND(recall_at_5_pct, 2) AS recall_at_5_pct,
 FROM per_keyword
 ORDER BY keyword;
 ```
-
 ![1-6 실행 결과](/image/week7/1-6.png)
+![1-6 실행 결과](/image/week7/1-6(2).png)
+
 
 ### 1-7 검색 결과의 타당성을 지표화 하기
 
@@ -529,8 +531,9 @@ SELECT keyword, ROUND(precision_at_5_pct, 2) AS precision_at_5_pct,
 FROM per_keyword
 ORDER BY keyword;
 ```
-
 ![1-7 실행 결과](/image/week7/1-7.png)
+![1-7 실행 결과](/image/week7/1-7(2).png)
+
 
 ### 1-8 검색 결과 순위와 관련된 지표 계산하기
 
@@ -579,7 +582,6 @@ SELECT keyword, ROUND(average_precision_pct, 2) AS average_precision_pct,
 FROM per_keyword
 ORDER BY keyword;
 ```
-
 ![1-8 실행 결과](/image/week7/1-8.png)
 
 
@@ -627,7 +629,6 @@ JOIN product_counts AS b ON p.product_b = b.product_id
 CROSS JOIN transaction_total AS t
 ORDER BY p.product_a, p.product_b;
 ```
-
 ![2-1 실행 결과](/image/week7/2-1.png)
 
 
